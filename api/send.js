@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     const answer = claudeData.content?.[0]?.text || "답변 생성 실패";
 
     // 3) 80글자 기준으로 메시지 분할
-    const CHUNK_SIZE = 90;
+    const CHUNK_SIZE = 70;
     const chunks = [];
     let current = "";
     const lines = answer.split("\n");
@@ -101,9 +101,7 @@ export default async function handler(req, res) {
     // 5) 분할된 메시지 순서대로 발송
     const smsResults = [];
     for (let i = 0; i < chunks.length; i++) {
-      const text = chunks.length > 1
-        ? `[${i + 1}/${chunks.length}]\n${chunks[i]}`
-        : chunks[i];
+      const text = chunks[i];
 
       const auth = await makeAuthHeader();
       const solapiRes = await fetch("https://api.solapi.com/messages/v4/send", {
