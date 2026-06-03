@@ -55,7 +55,7 @@ export default async function handler(req, res) {
     // SMS는 90바이트 제한 → LMS(장문)로 자동 전환되려면 type: "LMS" 명시
     const msgType = answer.length > 80 ? "LMS" : "SMS";
 
-    const timestamp = Date.now().toString();
+    const timestamp = new Date().toISOString();
     const salt = crypto.randomUUID();
     const hmacData = timestamp + salt;
 
