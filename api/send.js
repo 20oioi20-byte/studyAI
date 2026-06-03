@@ -118,7 +118,6 @@ export default async function handler(req, res) {
             from: FROM_PHONE,
             text: text,
             type: "SMS",
-            subject: ""
           }
         })
       });
