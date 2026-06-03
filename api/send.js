@@ -117,7 +117,8 @@ export default async function handler(req, res) {
             to: MY_PHONE,
             from: FROM_PHONE,
             text: text,
-            type: "SMS",
+            type: "LMS",
+            subject: "AI답변"
           }
         })
       });
