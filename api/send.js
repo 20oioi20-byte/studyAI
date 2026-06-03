@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     const answer = claudeData.content?.[0]?.text || "답변 생성 실패";
 
     // 3) 80글자 기준으로 메시지 분할
-    const CHUNK_SIZE = 80;
+    const CHUNK_SIZE = 50;
     const chunks = [];
     let current = "";
     const lines = answer.split("\n");
@@ -117,7 +117,8 @@ export default async function handler(req, res) {
             to: MY_PHONE,
             from: FROM_PHONE,
             text: text,
-            type: "LMS"
+            type: "LMS",
+            subject: ""
           }
         })
       });
