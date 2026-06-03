@@ -51,9 +51,8 @@ export default async function handler(req, res) {
     const answer = claudeData.content?.[0]?.text || "답변 생성 실패";
 
     // 2) 솔라피 SMS 발송
-    const smsText = "📚 StudyAI 답변\n" + answer.slice(0, 80) + (answer.length > 80 ? "…" : "");
-    // SMS는 90바이트 제한 → LMS(장문)로 자동 전환되려면 type: "LMS" 명시
-    const msgType = answer.length > 80 ? "LMS" : "SMS";
+    const smsText = "📚 StudyAI 답변\n" + answer.slice(0, 1000);
+    const msgType = "LMS";
 
     const timestamp = new Date().toISOString();
     const salt = crypto.randomUUID();
