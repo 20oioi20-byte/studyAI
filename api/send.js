@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     const answer = claudeData.content?.[0]?.text || "답변 생성 실패";
 
     // 3) 80글자 기준으로 메시지 분할
-    const CHUNK_SIZE = 30;
+    const CHUNK_SIZE = 90;
     const chunks = [];
     let current = "";
     const lines = answer.split("\n");
