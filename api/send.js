@@ -12,40 +12,52 @@ export default async function handler(req, res) {
   const FROM_PHONE    = process.env.FROM_PHONE;
 
   try {
-    const { question, image, mime, mode } = req.body;
-    // mode: "basic"(기본) | "summary"(기본+핵심요약)
+    const { question, image, mime, materials } = req.body;
 
-    // 1) 시스템 프롬프트 분기
-const systemPrompt = `당신은 학습 도우미입니다. 아래 규칙을 반드시 따르세요.
+    // 1) 시스템 프롬프트
+    const systemPrompt = `당신은 학습 도우미입니다. 아래 규칙을 반드시 따르세요.
 
 규칙:
 - 형식: 1번: (답) 형태로만 작성. 번호 없으면 답만.
 - 단답형(단어/숫자): 답만. 풀이 없음.
 - 계산형: 최종 답만. 풀이 없음.
-- 주관식/서술형: 핵심 키워드 중심으로 1문장 이내. 최대한 짧게
+- 주관식/서술형: 핵심 키워드 중심으로 1문장 이내. 최대한 짧게.
 - 여는말/닫는말/설명 절대 금지.
 - 첨부된 자료가 있으면 자료에서 먼저 답을 찾고, 자료에 없을 경우에만 AI 지식으로 답하세요.`;
 
-    // 2) Claude 답변 생성
+    // 2) 메시지 content 구성
     const content = [];
+
     // 참고자료 먼저
-if (materials && materials.length > 0) {
-  content.push({ type: "text", text: "=== 참고자료 ===" });
-  for (const mat of materials) { ... }
-  content.push({ type: "text", text: "=== 문제 ===" });
-}
-// 그 다음 문제
+    if (materials && materials.length > 0) {
+      content.push({ type: "text", text: "=== 참고자료 ===" });
+      for (const mat of materials) {
+        if (mat.type === "text") {
+          content.push({ type: "text", text: mat.data });
+        } else {
+          content.push({
+            type: "image",
+            source: { type: "base64", media_type: mat.mime || "image/jpeg", data: mat.data }
+          });
+        }
+      }
+      content.push({ type: "text", text: "=== 문제 ===" });
+    }
+
+    // 문제 이미지
     if (image) {
       content.push({
         type: "image",
         source: { type: "base64", media_type: mime || "image/jpeg", data: image }
       });
     }
+
     content.push({
       type: "text",
       text: question || "이 문제를 풀어주세요."
     });
 
+    // 3) Claude 호출
     const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -69,7 +81,7 @@ if (materials && materials.length > 0) {
     const claudeData = await claudeRes.json();
     const answer = claudeData.content?.[0]?.text || "답변 생성 실패";
 
-    // 3) 80글자 기준으로 메시지 분할
+    // 4) 글자수 기준 분할
     const CHUNK_SIZE = 60;
     const chunks = [];
     let current = "";
@@ -85,7 +97,7 @@ if (materials && materials.length > 0) {
     }
     if (current.trim()) chunks.push(current.trim());
 
-    // 4) HMAC-SHA256 서명 생성 함수
+    // 5) HMAC-SHA256 서명
     async function makeAuthHeader() {
       const timestamp = new Date().toISOString();
       const salt = crypto.randomUUID();
@@ -101,11 +113,9 @@ if (materials && materials.length > 0) {
       return `HMAC-SHA256 apiKey=${SOLAPI_KEY}, date=${timestamp}, salt=${salt}, signature=${sigHex}`;
     }
 
-    // 5) 분할된 메시지 순서대로 발송
+    // 6) SMS 순서대로 발송
     const smsResults = [];
     for (let i = 0; i < chunks.length; i++) {
-      const text = chunks[i];
-
       const auth = await makeAuthHeader();
       const solapiRes = await fetch("https://api.solapi.com/messages/v4/send", {
         method: "POST",
@@ -117,7 +127,7 @@ if (materials && materials.length > 0) {
           message: {
             to: MY_PHONE,
             from: FROM_PHONE,
-            text: text,
+            text: chunks[i],
             type: "LMS",
             subject: "AI답변"
           }
@@ -127,7 +137,6 @@ if (materials && materials.length > 0) {
       const solapiData = await solapiRes.json();
       smsResults.push(solapiRes.ok ? "발송완료" : solapiData.errorMessage);
 
-      // 메시지 간 0.5초 간격 (순서 보장)
       if (i < chunks.length - 1) {
         await new Promise(r => setTimeout(r, 500));
       }
