@@ -760,10 +760,6 @@
         <!-- 이미지 미리보기 목록 -->
         <div id="image-list" style="margin-top:12px;"></div>
       </div>
-      <div class="card">
-        <div class="section-title">추가 질문 (선택)</div>
-        <textarea id="image-question" placeholder="추가 질문을 입력하세요.&#10;(비워두면 1번부터 순서대로 자동 풀이)" style="min-height:80px;"></textarea>
-      </div>
     </div>
 
     <!-- PDF 패널 -->
@@ -778,10 +774,6 @@
         </div>
         <!-- PDF 목록 -->
         <div id="pdf-list" style="margin-top:12px;"></div>
-      </div>
-      <div class="card">
-        <div class="section-title">질문 입력</div>
-        <textarea id="file-question" placeholder="PDF의 몇 번 문제를 풀어드릴까요?&#10;(비워두면 1번부터 순서대로 자동 풀이)" style="min-height:80px;"></textarea>
       </div>
     </div>
 
@@ -1067,17 +1059,15 @@
 
     } else if (currentType === 'image') {
       if (!imageFiles.length) { showToast('이미지를 업로드해주세요.', 'error'); return; }
-      const q = document.getElementById('image-question').value.trim();
       body = {
-        question: q || '이 문제들을 1번부터 순서대로 풀어주세요. 한국어로 간결하게.',
+        question: '업로드된 이미지에서 문제를 찾아 1번부터 순서대로 풀어주세요. 저장된 참고자료가 있으면 자료에서 먼저 답을 찾고, 없으면 AI 지식으로 답하세요. 한국어로 간결하게.',
         images: imageFiles.map(f => ({ data: f.data, mime: f.mime }))
       };
 
     } else if (currentType === 'pdf') {
       if (!pdfFiles.length) { showToast('PDF 파일을 업로드해주세요.', 'error'); return; }
-      const q = document.getElementById('file-question').value.trim();
       body = {
-        question: q || '이 문제지의 모든 문제를 1번부터 순서대로 풀어주세요.',
+        question: '업로드된 PDF에서 문제를 찾아 1번부터 순서대로 풀어주세요. 저장된 참고자료가 있으면 자료에서 먼저 답을 찾고, 없으면 AI 지식으로 답하세요. 한국어로 간결하게.',
         images: pdfFiles.map(f => ({ data: f.data, mime: f.mime }))
       };
     }
