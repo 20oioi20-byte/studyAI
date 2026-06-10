@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>StudyAI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1a1a24;
+    --surface3: #22222e;
+    --border: #2c2c3e;
+    --border-hover: #3d3d55;
+    --accent: #7c6af7;
+    --accent-bright: #a78bfa;
+    --accent-glow: rgba(124,106,247,0.15);
+    --cyan: #22d3ee;
+    --cyan-glow: rgba(34,211,238,0.12);
+    --text: #f0f0f8;
+    --text-muted: #5a5a7a;
+    --text-dim: #8888aa;
+    --success: #34d399;
+    --error: #f87171;
+    --warning: #fbbf24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 100px;
+    overflow-x: hidden;
+  }
+
+  /* 배경 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 10%, rgba(124,106,247,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 85% 90%, rgba(34,211,238,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 560px;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 헤더 */
+  header {
+    text-align: center;
+    padding: 36px 0 24px;
+  }
+
+  .logo-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .logo-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--accent-bright);
+    text-transform: uppercase;
+    background: rgba(124,106,247,0.1);
+    border: 1px solid rgba(124,106,247,0.2);
+    border-radius: 4px;
+    padding: 3px 8px;
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #f0f0f8 0%, var(--accent-bright) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 300;
+    letter-spacing: 0.3px;
+  }
+
+  /* 메인 네비게이션 탭 (하단 고정) */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(13,13,20,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  }
+
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color 0.2s;
+  }
+
+  .nav-btn .nav-icon {
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+
+  .nav-btn.active {
+    color: var(--accent-bright);
+  }
+
+  .nav-btn.active .nav-icon {
+    transform: translateY(-1px);
+  }
+
+  /* 페이지 */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp 0.25s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 섹션 타이틀 */
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  /* 입력 타입 탭 (문제 타입) */
+  .type-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .type-tab {
+    flex: 1;
+    padding: 10px 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .type-tab .t-icon { font-size: 18px; }
+
+  .type-tab.active {
+    background: var(--accent-glow);
+    border-color: rgba(124,106,247,0.4);
+    color: var(--accent-bright);
+  }
+
+  /* 카드 */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .card:focus-within {
+    border-color: rgba(124,106,247,0.3);
+  }
+
+  /* 텍스트 입력 */
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 14px;
+    resize: none;
+    min-height: 130px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  textarea:focus { border-color: rgba(124,106,247,0.4); }
+  textarea::placeholder { color: var(--text-muted); font-size: 14px; }
+
+  /* 업로드 존 */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: var(--surface2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .upload-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .upload-icon { font-size: 32px; }
+  .upload-main { font-size: 14px; font-weight: 600; color: var(--accent-bright); }
+  .upload-sub { font-size: 12px; color: var(--text-muted); }
+
+  /* 카메라 직접촬영 버튼 */
+  .camera-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--cyan);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .camera-btn input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .camera-btn:hover { border-color: var(--cyan); background: var(--cyan-glow); }
+
+  /* 미리보기 */
+  .preview-wrap { display: none; margin-top: 12px; position: relative; }
+  .preview-wrap.show { display: block; }
+
+  .preview-wrap img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .preview-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview-file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-top: 12px;
+  }
+
+  .preview-file .fi { font-size: 22px; }
+  .preview-file .finfo { flex: 1; }
+  .preview-file .fname { font-size: 13px; font-weight: 500; }
+  .preview-file .fsize { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .preview-file .fremove { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 4px; }
+
+  /* 자료 라이브러리 배지 */
+  .lib-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .lib-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(124,106,247,0.15);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 20px;
+    color: var(--accent-bright);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    min-width: 22px;
+  }
+
+  .lib-status .lib-label { flex: 1; }
+
+  .lib-goto {
+    background: none;
+    border: none;
+    color: var(--accent-bright);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-decoration: underline;
+  }
+
+  /* 전송 버튼 */
+  .send-btn {
+    width: 100%;
+    padding: 17px;
+    background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+    margin-top: 4px;
+    box-shadow: 0 4px 20px rgba(124,106,247,0.3);
+  }
+
+  .send-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(124,106,247,0.4);
+  }
+
+  .send-btn:active:not(:disabled) { transform: translateY(0); }
+
+  .send-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* 로딩 */
+  .loading { display: none; text-align: center; padding: 28px 0; }
+  .loading.show { display: block; }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent-bright);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 14px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { font-size: 13px; color: var(--text-dim); }
+
+  /* 결과 카드 */
+  .result-card {
+    display: none;
+    margin-top: 16px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .result-card.show { display: block; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-ai { background: rgba(124,106,247,0.15); border: 1px solid rgba(124,106,247,0.3); color: var(--accent-bright); }
+  .badge-sms { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: var(--success); }
+  .badge-sms-fail { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--error); }
+  .badge-src { background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3); color: var(--cyan); }
+
+  .answer-text {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ===== 자료 관리 페이지 ===== */
+  .lib-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .lib-page-title {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .lib-total {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* 자료 추가 버튼들 */
+  .add-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .add-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    color: var(--text-dim);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .add-btn input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .add-btn:hover { border-color: var(--accent); color: var(--accent-bright); background: var(--accent-glow); }
+  .add-btn .ab-icon { font-size: 22px; }
+
+  /* 텍스트 자료 추가 모달 영역 */
+  .text-add-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .text-add-panel.show { display: block; animation: fadeUp 0.2s ease; }
+
+  .text-add-panel textarea {
+    min-height: 100px;
+    margin-bottom: 10px;
+  }
+
+  .text-add-panel input[type=text] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .text-add-panel input:focus { border-color: rgba(124,106,247,0.4); }
+  .text-add-panel input::placeholder { color: var(--text-muted); }
+
+  .add-confirm-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 10px;
+    color: var(--accent-bright);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .add-confirm-btn:hover { background: rgba(124,106,247,0.2); }
+
+  /* 자료 목록 */
+  .lib-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .lib-empty .empty-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+
+  .lib-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+  }
+
+  .lib-item:hover { border-color: var(--border-hover); }
+
+  .lib-item .li-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border-radius: 8px;
+  }
+
+  .lib-item .li-info { flex: 1; min-width: 0; }
+  .lib-item .li-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lib-item .li-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .lib-item .li-del {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .lib-item .li-del:hover { color: var(--error); background: rgba(248,113,113,0.1); }
+
+  .clear-all-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 10px;
+    color: var(--error);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+
+  .clear-all-btn:hover { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.4); }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    white-space: nowrap;
+    max-width: calc(100vw - 40px);
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(52,211,153,0.4); color: var(--success); }
+  .toast.error { border-color: rgba(248,113,113,0.4); color: var(--error); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo-line">
+      <span class="logo-badge">AI Study Assistant</span>
+    </div>
+    <h1>StudyAI</h1>
+    <p class="subtitle">문제를 올리면 AI가 분석하고 SMS로 답변을 보내드립니다</p>
+  </header>
+
+  <!-- ===== 문제풀기 페이지 ===== -->
+  <div class="page active" id="page-solve">
+
+    <!-- 자료 상태 표시 -->
+    <div class="lib-status">
+      <span>📚</span>
+      <span class="lib-label">저장된 자료</span>
+      <span class="lib-count" id="lib-count-badge">0</span>
+      <button class="lib-goto" onclick="goToLib()">관리 →</button>
+    </div>
+
+    <!-- 입력 타입 탭 -->
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="switchType('text')" id="tt-text">
+        <span class="t-icon">✏️</span>
+        텍스트
+      </button>
+      <button class="type-tab" onclick="switchType('image')" id="tt-image">
+        <span class="t-icon">📷</span>
+        사진
+      </button>
+      <button class="type-tab" onclick="switchType('pdf')" id="tt-pdf">
+        <span class="t-icon">📄</span>
+        PDF
+      </button>
+    </div>
+
+    <!-- 텍스트 입력 패널 -->
+    <div id="tp-text">
+      <div class="card">
+        <div class="section-title">문제 입력</div>
+        <textarea id="text-input" placeholder="풀고 싶은 문제를 입력하세요.&#10;예) 피타고라스 정리를 이용해 빗변의 길이를 구하시오."></textarea>
+      </div>
+    </div>
+
+    <!-- 이미지 입력 패널 -->
+    <div id="tp-image" style="display:none">
+      <div class="card">
+        <div class="section-title">문제 사진 <span id="img-count-label" style="color:var(--accent-bright);font-size:11px;"></span></div>
+
+        <!-- 모바일: 카메라 직접촬영 -->
+        <button class="camera-btn">
+          <input type="file" id="camera-input" accept="image/*" capture="environment" multiple onchange="addImageFiles(this)">
+          📸 카메라로 바로 촬영
+        </button>
+
+        <!-- 갤러리/파일 (여러 장) -->
+        <div class="upload-zone" id="image-zone">
+          <input type="file" id="image-input" accept="image/*" multiple onchange="addImageFiles(this)">
+          <span class="upload-icon">🖼️</span>
+          <span class="upload-main">갤러리에서 선택 (여러 장 가능)</span>
+          <span class="upload-sub">JPG · PNG · GIF · WEBP</span>
+        </div>
+
+        <!-- 이미지 미리보기 목록 -->
+        <div id="image-list" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">추가 질문 (선택)</div>
+        <textarea id="image-question" placeholder="추가 질문을 입력하세요.&#10;(비워두면 1번부터 순서대로 자동 풀이)" style="min-height:80px;"></textarea>
+      </div>
+    </div>
+
+    <!-- PDF 패널 -->
+    <div id="tp-pdf" style="display:none">
+      <div class="card">
+        <div class="section-title">PDF 업로드 <span id="pdf-count-label" style="color:var(--accent-bright);font-size:11px;"></span></div>
+        <div class="upload-zone" id="file-zone">
+          <input type="file" id="file-input" accept=".pdf,application/pdf" multiple onchange="addPdfFiles(this)">
+          <span class="upload-icon">📄</span>
+          <span class="upload-main">PDF 파일 선택 (여러 개 가능)</span>
+          <span class="upload-sub">문제지 · 시험지 등</span>
+        </div>
+        <!-- PDF 목록 -->
+        <div id="pdf-list" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="section-title">질문 입력</div>
+        <textarea id="file-question" placeholder="PDF의 몇 번 문제를 풀어드릴까요?&#10;(비워두면 1번부터 순서대로 자동 풀이)" style="min-height:80px;"></textarea>
+      </div>
+    </div>
+
+    <!-- 전송 버튼 -->
+    <button class="send-btn" id="send-btn" onclick="submitQuestion()">
+      📨 AI 답변 받기 (SMS 발송)
+    </button>
+
+    <!-- 로딩 -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-text">AI가 문제를 분석 중...</div>
+    </div>
+
+    <!-- 결과 -->
+    <div class="result-card" id="result-card">
+      <div class="result-header">
+        <span class="badge badge-ai">✦ AI 답변</span>
+        <span class="badge" id="sms-badge"></span>
+        <span class="badge badge-src" id="src-badge" style="display:none">📚 자료 참조</span>
+      </div>
+      <div class="answer-text" id="answer-text"></div>
+    </div>
+
+  </div><!-- /page-solve -->
+
+  <!-- ===== 자료관리 페이지 ===== -->
+  <div class="page" id="page-lib">
+
+    <div class="lib-page-header">
+      <span class="lib-page-title">📚 자료 라이브러리</span>
+      <span class="lib-total" id="lib-total-text">0개 저장됨</span>
+    </div>
+
+    <!-- 추가 버튼 4개 -->
+    <div class="add-btns">
+      <button class="add-btn" onclick="triggerPdfLib()">
+        <input type="file" id="lib-pdf-input" accept=".pdf,application/pdf" onchange="addLibFile(this,'pdf')">
+        <span class="ab-icon">📄</span>
+        PDF 추가
+      </button>
+      <button class="add-btn" onclick="triggerImgLib()">
+        <input type="file" id="lib-img-input" accept="image/*" multiple onchange="addLibImages(this)">
+        <span class="ab-icon">🖼️</span>
+        이미지 추가
+      </button>
+      <button class="add-btn" onclick="toggleTextPanel()">
+        <span class="ab-icon">📝</span>
+        텍스트 추가
+      </button>
+      <button class="add-btn" onclick="triggerCameraLib()">
+        <input type="file" id="lib-camera-input" accept="image/*" capture="environment" onchange="addLibImages(this)">
+        <span class="ab-icon">📸</span>
+        카메라 촬영
+      </button>
+    </div>
+
+    <!-- 텍스트 추가 패널 -->
+    <div class="text-add-panel" id="text-add-panel">
+      <div class="section-title">텍스트 자료 입력</div>
+      <input type="text" id="text-lib-name" placeholder="자료 이름 (예: 수학 3단원 공식)">
+      <textarea id="text-lib-content" placeholder="내용을 입력하세요..." style="min-height:100px; margin-bottom:10px;"></textarea>
+      <button class="add-confirm-btn" onclick="addLibText()">저장하기</button>
+    </div>
+
+    <!-- 자료 목록 -->
+    <div id="lib-list"></div>
+
+    <button class="clear-all-btn" id="clear-all-btn" onclick="clearAllLib()" style="display:none">
+      🗑️ 전체 삭제
+    </button>
+
+  </div><!-- /page-lib -->
+
+</div><!-- /container -->
+
+<!-- 하단 네비게이션 -->
+<nav class="nav-bar">
+  <button class="nav-btn active" id="nav-solve" onclick="switchPage('solve')">
+    <span class="nav-icon">🔍</span>
+    문제풀기
+  </button>
+  <button class="nav-btn" id="nav-lib" onclick="switchPage('lib')">
+    <span class="nav-icon">📚</span>
+    자료관리
+  </button>
+</nav>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // =============================================
+  // 상수 & 전역 상태
+  // =============================================
+  const API_URL = "https://study-ai-sand.vercel.app/api/send";
+  const STORAGE_KEY = "studyai_library_v2";
+
+  let currentPage = 'solve';
+  let currentType = 'text';
+  let library = [];   // {id, name, type, content, mime, size, addedAt}
+
+  // =============================================
+  // 초기화
+  // =============================================
+  (function init() {
+    loadLibrary();
+    renderLibrary();
+    updateLibBadge();
+  })();
+
+  // =============================================
+  // 페이지 전환
+  // =============================================
+  function switchPage(p) {
+    currentPage = p;
+    ['solve','lib'].forEach(x => {
+      document.getElementById('page-' + x).classList.toggle('active', x === p);
+      document.getElementById('nav-' + x).classList.toggle('active', x === p);
+    });
+    if (p === 'lib') renderLibrary();
+    hideResult();
+  }
+
+  function goToLib() { switchPage('lib'); }
+
+  // =============================================
+  // 입력 타입 전환
+  // =============================================
+  function switchType(t) {
+    currentType = t;
+    ['text','image','pdf'].forEach(x => {
+      document.getElementById('tt-' + x).classList.toggle('active', x === t);
+      document.getElementById('tp-' + x).style.display = x === t ? 'block' : 'none';
+    });
+    hideResult();
+  }
+
+  // =============================================
+  // 이미지 처리 — 여러 장
+  // =============================================
+  let imageFiles = [];  // [{data, mime, name, src}]
+
+  function addImageFiles(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    let done = 0;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        imageFiles.push({
+          data: e.target.result.split(',')[1],
+          mime: file.type || 'image/jpeg',
+          name: file.name,
+          src: e.target.result
+        });
+        done++;
+        if (done === files.length) renderImageList();
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  function removeImageItem(idx) {
+    imageFiles.splice(idx, 1);
+    renderImageList();
+  }
+
+  function renderImageList() {
+    const el = document.getElementById('image-list');
+    const label = document.getElementById('img-count-label');
+    label.textContent = imageFiles.length > 0 ? imageFiles.length + '장' : '';
+    if (!imageFiles.length) { el.innerHTML = ''; return; }
+    el.innerHTML = imageFiles.map((f, i) => `
+      <div style="position:relative;margin-bottom:8px;">
+        <img src="${f.src}" style="width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:1px solid var(--border);">
+        <div style="position:absolute;top:6px;left:8px;background:rgba(0,0,0,0.65);border-radius:6px;padding:2px 8px;font-size:11px;color:#fff;">${i+1}번</div>
+        <button onclick="removeImageItem(${i})" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.65);border:none;border-radius:50%;width:26px;height:26px;color:#fff;font-size:13px;cursor:pointer;">✕</button>
+      </div>`).join('');
+  }
+
+  // =============================================
+  // PDF 처리 — 여러 개
+  // =============================================
+  let pdfFiles = [];  // [{data, mime, name, size}]
+
+  function addPdfFiles(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    let done = 0;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        pdfFiles.push({
+          data: e.target.result.split(',')[1],
+          mime: 'application/pdf',
+          name: file.name,
+          size: (file.size / 1024).toFixed(0) + 'KB'
+        });
+        done++;
+        if (done === files.length) renderPdfList();
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  function removePdfItem(idx) {
+    pdfFiles.splice(idx, 1);
+    renderPdfList();
+  }
+
+  function renderPdfList() {
+    const el = document.getElementById('pdf-list');
+    const label = document.getElementById('pdf-count-label');
+    label.textContent = pdfFiles.length > 0 ? pdfFiles.length + '개' : '';
+    if (!pdfFiles.length) { el.innerHTML = ''; return; }
+    el.innerHTML = pdfFiles.map((f, i) => `
+      <div class="preview-file" style="margin-bottom:8px;">
+        <span class="fi">📄</span>
+        <div class="finfo">
+          <div class="fname">${escapeHtml(f.name)}</div>
+          <div class="fsize">${f.size}</div>
+        </div>
+        <button class="fremove" onclick="removePdfItem(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  // =============================================
+  // 결과 숨기기
+  // =============================================
+  function hideResult() {
+    document.getElementById('result-card').classList.remove('show');
+    document.getElementById('loading').classList.remove('show');
+  }
+
+  // =============================================
+  // 로딩 메시지
+  // =============================================
+  const loadingMessages = [
+    'AI가 문제를 분석 중...',
+    '자료에서 답변을 찾는 중...',
+    '답변을 생성하고 있어요...',
+    'SMS 발송 준비 중...'
+  ];
+  let msgIdx = 0;
+  let msgInterval;
+
+  function startLoading() {
+    msgIdx = 0;
+    document.getElementById('loading-text').textContent = loadingMessages[0];
+    document.getElementById('loading').classList.add('show');
+    msgInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loadingMessages.length;
+      document.getElementById('loading-text').textContent = loadingMessages[msgIdx];
+    }, 3000);
+  }
+
+  function stopLoading() {
+    clearInterval(msgInterval);
+    document.getElementById('loading').classList.remove('show');
+  }
+
+  // =============================================
+  // 제출 (SMS 로직 원본 100% 유지 + 자료 주입)
+  // =============================================
+  async function submitQuestion() {
+    const btn = document.getElementById('send-btn');
+
+    // --- 입력값 수집 ---
+    let body = {};
+
+    if (currentType === 'text') {
+      const q = document.getElementById('text-input').value.trim();
+      if (!q) { showToast('문제를 입력해주세요.', 'error'); return; }
+      body = { question: q };
+
+    } else if (currentType === 'image') {
+      if (!imageFiles.length) { showToast('이미지를 업로드해주세요.', 'error'); return; }
+      const q = document.getElementById('image-question').value.trim();
+      body = {
+        question: q || '이 문제들을 1번부터 순서대로 풀어주세요. 한국어로 간결하게.',
+        images: imageFiles.map(f => ({ data: f.data, mime: f.mime }))
+      };
+
+    } else if (currentType === 'pdf') {
+      if (!pdfFiles.length) { showToast('PDF 파일을 업로드해주세요.', 'error'); return; }
+      const q = document.getElementById('file-question').value.trim();
+      body = {
+        question: q || '이 문제지의 모든 문제를 1번부터 순서대로 풀어주세요.',
+        images: pdfFiles.map(f => ({ data: f.data, mime: f.mime }))
+      };
+    }
+
+    // --- 자료 라이브러리 주입 ---
+    const textMaterials = library.filter(m => m.type === 'text');
+    if (textMaterials.length > 0) {
+      const libText = textMaterials.map(m => `[${m.name}]\n${m.content}`).join('\n\n---\n\n');
+      body.question = `=== 참고자료(텍스트) ===\n${libText}\n\n=== 문제 ===\n${body.question}`;
+    }
+
+    // 이미지/PDF 자료를 materials 배열로 전달
+    const fileMaterials = library.filter(m => m.type !== 'text' && m.content);
+    if (fileMaterials.length > 0) {
+      body.materials = fileMaterials.map(m => ({
+        data: m.content,
+        mime: m.mime || 'image/jpeg',
+        name: m.name,
+        type: m.type
+      }));
+    }
+
+    // --- UI 상태 ---
+    btn.disabled = true;
+    hideResult();
+    startLoading();
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+
+      stopLoading();
+
+      if (data.ok) {
+        document.getElementById('answer-text').textContent = data.answer;
+
+        const smsBadge = document.getElementById('sms-badge');
+        if (data.sms === '발송완료') {
+          smsBadge.className = 'badge badge-sms';
+          smsBadge.textContent = '📱 SMS 발송완료';
+          showToast('SMS가 발송됐습니다! 📱', 'success');
+        } else {
+          smsBadge.className = 'badge badge-sms-fail';
+          smsBadge.textContent = '⚠️ SMS 실패';
+        }
+
+        const srcBadge = document.getElementById('src-badge');
+        srcBadge.style.display = library.length > 0 ? 'inline-flex' : 'none';
+
+        document.getElementById('result-card').classList.add('show');
+      } else {
+        showToast('오류: ' + (data.error || '알 수 없는 오류'), 'error');
+      }
+    } catch (e) {
+      stopLoading();
+      showToast('서버 연결 오류가 발생했습니다.', 'error');
+    }
+
+    btn.disabled = false;
+  }
+
+  // =============================================
+  // 자료 라이브러리 — localStorage
+  // =============================================
+  function loadLibrary() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      library = raw ? JSON.parse(raw) : [];
+    } catch(e) { library = []; }
+  }
+
+  function saveLibrary() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
+    } catch(e) {
+      showToast('저장 실패: 용량 초과일 수 있습니다.', 'error');
+    }
+  }
+
+  function updateLibBadge() {
+    const n = library.length;
+    document.getElementById('lib-count-badge').textContent = n;
+    document.getElementById('lib-total-text').textContent = n + '개 저장됨';
+    const clearBtn = document.getElementById('clear-all-btn');
+    if (clearBtn) clearBtn.style.display = n > 0 ? 'block' : 'none';
+  }
+
+  // 자료 목록 렌더링
+  function renderLibrary() {
+    updateLibBadge();
+    const el = document.getElementById('lib-list');
+    if (!el) return;
+
+    if (library.length === 0) {
+      el.innerHTML = `<div class="lib-empty">
+        <span class="empty-icon">📭</span>
+        저장된 자료가 없습니다.<br>위 버튼으로 자료를 추가하면<br>문제 풀 때 자동으로 참고합니다.
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = library.map((m, i) => {
+      const icon = m.type === 'pdf' ? '📄' : m.type === 'image' ? '🖼️' : '📝';
+      const meta = m.addedAt ? new Date(m.addedAt).toLocaleDateString('ko-KR') : '';
+      return `<div class="lib-item">
+        <span class="li-icon">${icon}</span>
+        <div class="li-info">
+          <div class="li-name">${escapeHtml(m.name)}</div>
+          <div class="li-meta">${m.type.toUpperCase()}${m.size ? ' · ' + m.size : ''} · ${meta}</div>
+        </div>
+        <button class="li-del" onclick="deleteLib(${i})" title="삭제">🗑️</button>
+      </div>`;
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // 자료 삭제
+  function deleteLib(idx) {
+    library.splice(idx, 1);
+    saveLibrary();
+    renderLibrary();
+    showToast('자료를 삭제했습니다.');
+  }
+
+  // 전체 삭제
+  function clearAllLib() {
+    if (!confirm('저장된 자료를 모두 삭제할까요?')) return;
+    library = [];
+    saveLibrary();
+    renderLibrary();
+    showToast('전체 삭제 완료.');
+  }
+
+  // PDF 추가
+  function triggerPdfLib() {}  // input이 버튼 안에 있어서 자동 트리거
+  function triggerImgLib() {}
+  function triggerCameraLib() {}
+
+  function addLibFile(input, type) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const content = e.target.result.split(',')[1];
+      library.push({
+        id: Date.now(),
+        name: file.name.replace(/\.[^.]+$/, ''),
+        type: type,
+        content: content,
+        mime: file.type || 'application/pdf',
+        size: (file.size / 1024).toFixed(0) + 'KB',
+        addedAt: new Date().toISOString()
+      });
+      saveLibrary();
+      renderLibrary();
+      showToast('📄 자료가 저장됐습니다.', 'success');
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  function addLibImages(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    let done = 0;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const content = e.target.result.split(',')[1];
+        library.push({
+          id: Date.now() + Math.random(),
+          name: file.name.replace(/\.[^.]+$/, '') || '이미지_' + (library.length + 1),
+          type: 'image',
+          content: content,
+          mime: file.type || 'image/jpeg',
+          size: (file.size / 1024).toFixed(0) + 'KB',
+          addedAt: new Date().toISOString()
+        });
+        done++;
+        if (done === files.length) {
+          saveLibrary();
+          renderLibrary();
+          showToast('🖼️ 이미지 ' + files.length + '개 저장됐습니다.', 'success');
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+
+  // 텍스트 추가
+  function toggleTextPanel() {
+    const p = document.getElementById('text-add-panel');
+    p.classList.toggle('show');
+  }
+
+  function addLibText() {
+    const name = document.getElementById('text-lib-name').value.trim();
+    const content = document.getElementById('text-lib-content').value.trim();
+    if (!content) { showToast('내용을 입력해주세요.', 'error'); return; }
+
+    library.push({
+      id: Date.now(),
+      name: name || '텍스트_' + (library.length + 1),
+      type: 'text',
+      content: content,
+      mime: null,
+      size: content.length + '자',
+      addedAt: new Date().toISOString()
+    });
+    saveLibrary();
+    renderLibrary();
+
+    document.getElementById('text-lib-name').value = '';
+    document.getElementById('text-lib-content').value = '';
+    document.getElementById('text-add-panel').classList.remove('show');
+    showToast('📝 텍스트 자료가 저장됐습니다.', 'success');
+  }
+
+  // =============================================
+  // 토스트
+  // =============================================
+  function showToast(msg, type = '') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
