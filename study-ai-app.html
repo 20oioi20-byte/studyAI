@@ -816,7 +816,7 @@
       <span class="lib-total" id="lib-total-text">0개 저장됨</span>
     </div>
 
-    <!-- 추가 버튼 4개 -->
+    <!-- 추가 버튼 5개 -->
     <div class="add-btns">
       <button class="add-btn" onclick="triggerPdfLib()">
         <input type="file" id="lib-pdf-input" accept=".pdf,application/pdf" onchange="addLibFile(this,'pdf')">
@@ -828,8 +828,13 @@
         <span class="ab-icon">🖼️</span>
         이미지 추가
       </button>
-      <button class="add-btn" onclick="toggleTextPanel()">
+      <button class="add-btn" onclick="triggerWordLib()">
+        <input type="file" id="lib-word-input" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple onchange="addLibWordFiles(this)">
         <span class="ab-icon">📝</span>
+        Word 추가
+      </button>
+      <button class="add-btn" onclick="toggleTextPanel()">
+        <span class="ab-icon">✏️</span>
         텍스트 추가
       </button>
       <button class="add-btn" onclick="triggerCameraLib()">
@@ -1179,7 +1184,7 @@
     }
 
     el.innerHTML = library.map((m, i) => {
-      const icon = m.type === 'pdf' ? '📄' : m.type === 'image' ? '🖼️' : '📝';
+      const icon = m.type === 'pdf' ? '📄' : m.type === 'image' ? '🖼️' : m.type === 'docx' ? '📝' : '✏️';
       const meta = m.addedAt ? new Date(m.addedAt).toLocaleDateString('ko-KR') : '';
       return `<div class="lib-item">
         <span class="li-icon">${icon}</span>
@@ -1213,10 +1218,41 @@
     showToast('전체 삭제 완료.');
   }
 
-  // PDF 추가
-  function triggerPdfLib() {}  // input이 버튼 안에 있어서 자동 트리거
+  // 자료 추가 트리거 (input이 버튼 안에 있어서 자동 트리거)
+  function triggerPdfLib() {}
   function triggerImgLib() {}
+  function triggerWordLib() {}
   function triggerCameraLib() {}
+
+  // Word(.docx) 추가
+  function addLibWordFiles(input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    let done = 0;
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const docxContent = e.target.result.split(',')[1];
+        library.push({
+          id: Date.now() + Math.random(),
+          name: file.name.replace(/\.docx$/i, '') || 'Word_' + (library.length + 1),
+          type: 'docx',
+          content: docxContent,
+          mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          size: (file.size / 1024).toFixed(0) + 'KB',
+          addedAt: new Date().toISOString()
+        });
+        done++;
+        if (done === files.length) {
+          saveLibrary();
+          renderLibrary();
+          showToast('📝 Word 자료 ' + files.length + '개 저장됐습니다.', 'success');
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
 
   function addLibFile(input, type) {
     const file = input.files[0];
