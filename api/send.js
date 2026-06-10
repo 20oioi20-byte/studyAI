@@ -1,3 +1,16 @@
+import mammoth from "mammoth";
+
+// ★ Word(.docx) base64 → 텍스트 추출
+async function extractDocxText(base64Data) {
+  try {
+    const buffer = Buffer.from(base64Data, "base64");
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value || "";
+  } catch (e) {
+    return "[Word 파일 텍스트 추출 실패: " + e.message + "]";
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -42,6 +55,13 @@ export default async function handler(req, res) {
             type: "document",
             source: { type: "base64", media_type: "application/pdf", data: mat.data }
           });
+        } else if (
+          mat.mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+          mat.type === "docx"
+        ) {
+          // ★ Word(.docx): mammoth으로 텍스트 추출 후 text 블록으로 전달
+          const docxText = await extractDocxText(mat.data);
+          content.push({ type: "text", text: `[${mat.name || "Word 자료"}]\n${docxText}` });
         } else {
           // 이미지 자료
           content.push({
