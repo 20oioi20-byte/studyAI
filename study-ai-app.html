@@ -926,28 +926,56 @@
   }
 
   // =============================================
+  // 이미지 압축 (Vercel 4.5MB 제한 대응)
+  // =============================================
+  function compressImage(file, maxDim = 1600, targetBytes = 1.2 * 1024 * 1024) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+            else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          let quality = 0.85;
+          let dataUrl = canvas.toDataURL('image/jpeg', quality);
+          while (dataUrl.length * 0.75 > targetBytes && quality > 0.3) {
+            quality -= 0.1;
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+          resolve({ data: dataUrl.split(',')[1], mime: 'image/jpeg', src: dataUrl });
+        };
+        img.onerror = () => reject(new Error('이미지 로드 실패'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('파일 읽기 실패'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // =============================================
   // 이미지 처리 — 여러 장
   // =============================================
   let imageFiles = [];  // [{data, mime, name, src}]
 
-  function addImageFiles(input) {
+  async function addImageFiles(input) {
     const files = Array.from(input.files);
     if (!files.length) return;
-    let done = 0;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        imageFiles.push({
-          data: e.target.result.split(',')[1],
-          mime: file.type || 'image/jpeg',
-          name: file.name,
-          src: e.target.result
-        });
-        done++;
-        if (done === files.length) renderImageList();
-      };
-      reader.readAsDataURL(file);
-    });
+    showToast('이미지 처리 중...');
+    for (const file of files) {
+      try {
+        const compressed = await compressImage(file);
+        imageFiles.push({ data: compressed.data, mime: compressed.mime, name: file.name, src: compressed.src });
+      } catch (e) {
+        showToast('이미지 처리 실패: ' + file.name, 'error');
+      }
+    }
+    renderImageList();
     input.value = '';
   }
 
@@ -1097,6 +1125,13 @@
         name: m.name,
         type: m.type
       }));
+    }
+
+    // --- 총 페이로드 크기 체크 ---
+    const totalBytes = JSON.stringify(body).length;
+    if (totalBytes > 4 * 1024 * 1024) {
+      showToast('⚠️ 전송 용량 초과. 이미지/자료 수를 줄여주세요.', 'error');
+      return;
     }
 
     // --- UI 상태 ---
@@ -1276,32 +1311,29 @@
     input.value = '';
   }
 
-  function addLibImages(input) {
+  async function addLibImages(input) {
     const files = Array.from(input.files);
     if (!files.length) return;
-    let done = 0;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        const content = e.target.result.split(',')[1];
+    showToast('이미지 처리 중...');
+    let count = 0;
+    for (const file of files) {
+      try {
+        const compressed = await compressImage(file);
         library.push({
           id: Date.now() + Math.random(),
           name: file.name.replace(/\.[^.]+$/, '') || '이미지_' + (library.length + 1),
           type: 'image',
-          content: content,
-          mime: file.type || 'image/jpeg',
-          size: (file.size / 1024).toFixed(0) + 'KB',
+          content: compressed.data,
+          mime: compressed.mime,
+          size: Math.round(compressed.data.length * 0.75 / 1024) + 'KB',
           addedAt: new Date().toISOString()
         });
-        done++;
-        if (done === files.length) {
-          saveLibrary();
-          renderLibrary();
-          showToast('🖼️ 이미지 ' + files.length + '개 저장됐습니다.', 'success');
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+        count++;
+      } catch (e) {
+        showToast('이미지 처리 실패: ' + file.name, 'error');
+      }
+    }
+    if (count > 0) { saveLibrary(); renderLibrary(); showToast('🖼️ 이미지 ' + count + '개 저장됐습니다.', 'success'); }
     input.value = '';
   }
 
